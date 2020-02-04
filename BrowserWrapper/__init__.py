@@ -1,83 +1,100 @@
 from time import sleep
 from random import randint
 import logging
-import selenium.common.exceptions as SeleniumExceptions
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.firefox.options import Options as FireFoxOptions
+from dataclasses import dataclass, field
+from selenium import webdriver
+from selenium.common.exceptions import SeleniumExceptions
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
 from selenium.webdriver.remote.remote_connection import LOGGER as seleniumLogger
-from selenium import webdriver
 from urllib3.connectionpool import log as urllibLogger
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
+
+# https://packaging.python.org/tutorials/packaging-projects/
 
 # Disable all of the connection logs from appearing.
 seleniumLogger.setLevel(logging.WARNING)
 urllibLogger.setLevel(logging.WARNING)
 
-
+@dataclass
+class BrowserWrapperConfiguration:
+    """Model for scan configuration"""
+    
+    def __init__(self, BrowserType="Chrome", Remote=False, Headless=False, BrowserWidth=1920,
+                 BrowserHeight=1080, SeleniumGridHost="", SeleniumGridPort=4444, Options=[], DesiredCapabilities={}):
+        """BrowserWrapperConfiguration instances are used to standardize driver configuration when provided while creating a BrowserWrapper instance.
+        
+        Keyword Arguments:
+            BrowserType {str} -- "Chrome" or "Firefox" (default: {"Chrome"})
+            Remote {bool} -- Generates a remote grid browser when enabled, versus a local browser when false (default: {False})
+            Headless {bool} -- When set to True, the browser will be headless (default: {False})
+            BrowserWidth {int} -- Width to create the browser as (default: {1920})
+            BrowserHeight {int} -- Height to create the browser as (default: {1080})
+            SeleniumGridHost {str} -- If Remote is True, this is the host of the Selenium Grid Hub (default: {""})
+            SeleniumGridPort {int} -- If Remote is True, this is the port of the Selenium Grid Hub (default: {4444})
+            Options {list} -- Chrome or Firefox options to enable (default: {[]})
+            DesiredCapabilities {dict} -- DesiredCapabilities to provide to the driver (default: {{}})
+        """
+        self.BrowserType = BrowserType
+        self.Remote = Remote
+        self.Headless = Headless
+        self.BrowserWidth = BrowserWidth
+        self.BrowserHeight = BrowserHeight
+        self.SeleniumGridHost = SeleniumGridHost
+        self.SeleniumGridPort = SeleniumGridPort
+        self.Options = Options
+        self.DesiredCapabilities = DesiredCapabilities
+        
 class BrowserWrapper:
     """Wrapper for driver functionality"""
-    # pylint: disable=invalid-name, import-outside-toplevel, unsupported-membership-test, too-many-public-methods, no-self-use, import-outside-toplevel
-    BrowserType = "Chrome"
-    LocationType = "Local"
-    Headless = True
-    BrowserWidth = 1920
-    BrowserHeight = 1080
-    SeleniumGridHost = None
-    SeleniumGridPort = None
-    DesiredCapabilities = {}
 
-    def __init__(self, Log=None):
-        self.log = Log
+    def __init__(self, Config=BrowserWrapperConfiguration(), Driver=None, Log=None):
+        if Config is None and Driver is None:
+            raise EnvironmentError("Neither config nor existing driver was provided, one of which is required")
+        self._provided_config = Config
         self.action_logging_enabled = True  # If False, prevents logs from being added on wrapped function calls
-        self.previous_action_logging_setting = None  # Used to store the last state of logging for use in toggling
+        self._previous_action_logging_setting = None  # Used to store the last state of logging for use in toggling
+        self._log = Log
 
-        if BrowserWrapper.BrowserType == BrowserType.Chrome:
-            self.CORE = create_chrome_instance()
-        elif BrowserWrapper.BrowserType == BrowserType.Firefox:
-            self.CORE = create_firefox_instance()
+        if Driver is not None:
+            self.CORE = Driver
+        elif self._provided_config.BrowserType == "Chrome":
+            self.CORE = create_chrome_instance(self._provided_config)
+        elif self._provided_config.BrowserType == "Firefox":
+            self.CORE = create_firefox_instance(self._provided_config)
         else:
-            # Browser types are validated upon initial PyTest extraction. This error is only possible if the object is used outside of PyTest execution.
-            raise EnvironmentError(f"{BrowserWrapper.BrowserType} is not a supported browser type")
-
-        self.utilities = Utilities(self)
-        self.assertions = Assertions(self)
-        # Generators are a class import as they don't need access to this object
-        if not DocumentationOnly:
-            self.log_info(f"Browser: Created {BrowserWrapper.BrowserType.capitalize()} instance")
+            raise EnvironmentError(f"{self._provided_config.BrowserType} is not a supported browser type")
 
     ############################################################################################################################################
     ##### Core Functions #######################################################################################################################
     ############################################################################################################################################
     def log_info(self, msg, *args, **kwargs):
         """Wraps info logging functionality so that it can skipped if needed"""
-        if self.action_logging_enabled and self.log is not None:
-            self.log.info(msg, *args, **kwargs)
+        if self.action_logging_enabled and self._log is not None:
+            self._log.info(msg, *args, **kwargs)
         return
 
     def log_warning(self, msg, *args, **kwargs):
         """Wraps warning logging functionality so that it can skipped if needed"""
-        if self.action_logging_enabled and self.log is not None:
-            self.log.warning(msg, *args, **kwargs)
+        if self.action_logging_enabled and self._log is not None:
+            self._log.warning(msg, *args, **kwargs)
         return
 
     def disable_logging(self):
         """Used to temporarily disable action logging"""
-        if self.previous_action_logging_setting is None:
-            self.previous_action_logging_setting = self.action_logging_enabled
+        if self._previous_action_logging_setting is None:
+            self._previous_action_logging_setting = self.action_logging_enabled
             self.action_logging_enabled = False
         return
 
     def revert_logging(self):
         """Reverting action logging to original settings"""
-        if self.previous_action_logging_setting is not None:
-            self.action_logging_enabled = self.previous_action_logging_setting
-            self.previous_action_logging_setting = None
+        if self._previous_action_logging_setting is not None:
+            self.action_logging_enabled = self._previous_action_logging_setting
+            self._previous_action_logging_setting = None
         return
 
     def is_alive(self):
@@ -100,7 +117,7 @@ class BrowserWrapper:
         else:
             for comparison_type, comparison_data in snapshot.items():
                 if previous_data[comparison_type] != comparison_data:
-                    self.log_info(f"Browser: {comparison_type} changed from {previous_data[comparison_type]} to {comparison_data}")
+                    self._log_info(f"Browser: {comparison_type} changed from {previous_data[comparison_type]} to {comparison_data}")
             return None
 
     def format_element(self, element):
@@ -128,7 +145,7 @@ class BrowserWrapper:
             Boolean -- True if element is clickable, False otherwise
         """
         result = self.CORE.find_element(*self.format_element(element_tuple)).is_enabled()
-        self.log_info(f"Browser.elementIsClickable: {element_tuple} is {'' if result else 'not '}clickable")
+        self._log_info(f"Browser.elementIsClickable: {element_tuple} is {'' if result else 'not '}clickable")
         return result
 
     def elementIsPresent(self, element_tuple):
@@ -145,7 +162,7 @@ class BrowserWrapper:
             result = True
         except SeleniumExceptions.NoSuchElementException:
             result = False
-        self.log_info(f"Browser.elementIsPresent: {element_tuple} is {'' if result else 'not '}present")
+        self._log_info(f"Browser.elementIsPresent: {element_tuple} is {'' if result else 'not '}present")
         return result
 
     def elementIsVisible(self, element_tuple):
@@ -159,7 +176,7 @@ class BrowserWrapper:
             Boolean -- True if element is visible, False otherwise
         """
         result = self.CORE.find_element(*self.format_element(element_tuple)).is_displayed()
-        self.log_info(f"Browser.elementIsVisible: {element_tuple} is {'' if result else 'not '}present")
+        self._log_info(f"Browser.elementIsVisible: {element_tuple} is {'' if result else 'not '}present")
         return result
 
     def elementIsChecked(self, element_tuple):
@@ -173,7 +190,7 @@ class BrowserWrapper:
             Boolean -- True if element is checked, False otherwise
         """
         result = self.CORE.find_element(*self.format_element(element_tuple)).is_selected()
-        self.log_info(f"Browser.elementIsChecked: {element_tuple} is {'' if result else 'not '}checked")
+        self._log_info(f"Browser.elementIsChecked: {element_tuple} is {'' if result else 'not '}checked")
         return result
 
     def alertIsPresent(self, *, accept_if_present=False):
@@ -190,10 +207,10 @@ class BrowserWrapper:
         if accept_if_present and result:
             self.acceptAlert()
             self.revert_logging()
-            self.log_info(f"Browser.alertIsPresent: Alert is present, and has been accepted as accept_if_present=True")
+            self._log_info(f"Browser.alertIsPresent: Alert is present, and has been accepted as accept_if_present=True")
         else:
             self.revert_logging()
-            self.log_info(f"Browser.alertIsPresent: Alert is {'' if result else 'not '}present")
+            self._log_info(f"Browser.alertIsPresent: Alert is {'' if result else 'not '}present")
         return result
 
     ############################################################################################################################################
@@ -213,10 +230,10 @@ class BrowserWrapper:
         """
         try:
             WebDriverWait(self.CORE, timeout).until(EC.visibility_of_element_located(self.format_element(element_tuple)))  # Don't unpack, use function to parse out first 2 items
-            self.log_info(f"Browser.waitForElementVisible: {element_tuple} is visible within {timeout} seconds")
+            self._log_info(f"Browser.waitForElementVisible: {element_tuple} is visible within {timeout} seconds")
             return True
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForElementVisible: {element_tuple} did not become visible after {timeout} seconds")
+            self._log_warning(f"Browser.waitForElementVisible: {element_tuple} did not become visible after {timeout} seconds")
             return False
 
     def waitForElementNotVisible(self, element_tuple, *, timeout=5):
@@ -232,10 +249,10 @@ class BrowserWrapper:
         """
         try:
             WebDriverWait(self.CORE, timeout).until(EC.invisibility_of_element_located(self.format_element(element_tuple)))  # Don't unpack, use function to parse out first 2 items
-            self.log_info(f"Browser.waitForElementNotVisible: {element_tuple} is invisible within {timeout} seconds")
+            self._log_info(f"Browser.waitForElementNotVisible: {element_tuple} is invisible within {timeout} seconds")
             return True
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForElementNotVisible: {element_tuple} did not become invisible after {timeout} seconds")
+            self._log_warning(f"Browser.waitForElementNotVisible: {element_tuple} did not become invisible after {timeout} seconds")
             return False
 
     def waitForElementPresent(self, element_tuple, *, timeout=5):
@@ -250,10 +267,10 @@ class BrowserWrapper:
         """
         try:
             WebDriverWait(self.CORE, timeout).until(EC.presence_of_element_located(self.format_element(element_tuple)))  # Don't unpack, use function to parse out first 2 items
-            self.log_info(f"Browser.waitForElementPresent: {element_tuple} is present within {timeout} seconds")
+            self._log_info(f"Browser.waitForElementPresent: {element_tuple} is present within {timeout} seconds")
             return True
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForElementPresent: {element_tuple} did not become present after {timeout} seconds")
+            self._log_warning(f"Browser.waitForElementPresent: {element_tuple} did not become present after {timeout} seconds")
             return False
 
     def waitForElementNotPresent(self, element_tuple, *, timeout=5):
@@ -273,10 +290,10 @@ class BrowserWrapper:
                 self.revert_logging()
                 raise SeleniumExceptions.TimeoutException()
             self.revert_logging()
-            self.log_info(f"Browser.waitForElementNotPresent: {element_tuple} is present within {timeout} seconds")
+            self._log_info(f"Browser.waitForElementNotPresent: {element_tuple} is present within {timeout} seconds")
             return True
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForElementNotPresent: {element_tuple} did not become not present after {timeout} seconds")
+            self._log_warning(f"Browser.waitForElementNotPresent: {element_tuple} did not become not present after {timeout} seconds")
             return False
 
     def waitForAlertPresent(self, *, timeout=5):
@@ -290,10 +307,10 @@ class BrowserWrapper:
         """
         try:
             WebDriverWait(self.CORE, timeout).until(EC.alert_is_present())
-            self.log_info(f"Browser.waitForAlertPresent: Alert is present within {timeout} seconds")
+            self._log_info(f"Browser.waitForAlertPresent: Alert is present within {timeout} seconds")
             return True
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForAlertPresent: Alert did not become present after {timeout} seconds")
+            self._log_warning(f"Browser.waitForAlertPresent: Alert did not become present after {timeout} seconds")
             return False
 
     def waitForElementClickable(self, element_tuple, *, timeout=5):
@@ -309,10 +326,10 @@ class BrowserWrapper:
         """
         try:
             WebDriverWait(self.CORE, timeout).until(EC.element_to_be_clickable(self.format_element(element_tuple)))  # Don't unpack, use function to parse out first 2 items
-            self.log_info(f"Browser.waitForElementClickable: {element_tuple} is clickable within {timeout} seconds")
+            self._log_info(f"Browser.waitForElementClickable: {element_tuple} is clickable within {timeout} seconds")
             return True
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForElementClickable: {element_tuple} did not become clickable after {timeout} seconds")
+            self._log_warning(f"Browser.waitForElementClickable: {element_tuple} did not become clickable after {timeout} seconds")
             return False
 
     def waitForURLToContain(self, url_portion, *, timeout=5):
@@ -324,9 +341,9 @@ class BrowserWrapper:
         """
         try:
             WebDriverWait(self.CORE, timeout).until(lambda self: url_portion in self.current_url)
-            self.log_info(f"Browser.waitForURLToContain: {self.CORE.current_url} contains {url_portion} within {timeout} seconds")
+            self._log_info(f"Browser.waitForURLToContain: {self.CORE.current_url} contains {url_portion} within {timeout} seconds")
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForURLToContain: {self.CORE.current_url} does not contain {url_portion} after {timeout} seconds")
+            self._log_warning(f"Browser.waitForURLToContain: {self.CORE.current_url} does not contain {url_portion} after {timeout} seconds")
             # We're going to capture the timeout as it doesn't matter - the return statement is the bool
         return url_portion in self.CORE.current_url
 
@@ -342,10 +359,10 @@ class BrowserWrapper:
             self.disable_logging()
             WebDriverWait(self, timeout).until(lambda self: self.getText(element_tuple) != original_text)
             self.revert_logging()
-            self.log_info(f"Browser.waitForElementTextChange: {element_tuple} text changed from {original_text} within {timeout} seconds")
+            self._log_info(f"Browser.waitForElementTextChange: {element_tuple} text changed from {original_text} within {timeout} seconds")
             return True
         except SeleniumExceptions.TimeoutException:
-            self.log_warning(f"Browser.waitForElementTextChange: {element_tuple} text did not changefrom {original_text} after {timeout} seconds")
+            self._log_warning(f"Browser.waitForElementTextChange: {element_tuple} text did not changefrom {original_text} after {timeout} seconds")
             return False
 
     ############################################################################################################################################
@@ -360,7 +377,7 @@ class BrowserWrapper:
         """
         if disable_optimizely:
             url = self.utilities.disable_optimizely(url)
-        self.log_info(f"Browser.navigate: Navigating to {url} [disable_optimizely={disable_optimizely}]")
+        self._log_info(f"Browser.navigate: Navigating to {url} [disable_optimizely={disable_optimizely}]")
         self.CORE.get(url)
         return
 
@@ -374,7 +391,7 @@ class BrowserWrapper:
             string -- Text within the element
         """
         result = self.CORE.find_element(*self.format_element(element_tuple)).text
-        self.log_info(f"Browser.getText: {element_tuple} text is {result}")
+        self._log_info(f"Browser.getText: {element_tuple} text is {result}")
         return result
 
     def setText(self, element_tuple, text):
@@ -384,7 +401,7 @@ class BrowserWrapper:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
             text {string} -- String to type into the element
         """
-        self.log_info(f"Browser.setText: Setting text of {element_tuple} to {text}")
+        self._log_info(f"Browser.setText: Setting text of {element_tuple} to {text}")
 
         self.disable_logging()
         self.clearText(element_tuple)
@@ -399,7 +416,7 @@ class BrowserWrapper:
         Arguments:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
         """
-        self.log_info(f"Browser.clearText: Clearing the text of {element_tuple}")
+        self._log_info(f"Browser.clearText: Clearing the text of {element_tuple}")
         self.CORE.find_element(*self.format_element(element_tuple)).clear()
         return
 
@@ -410,7 +427,7 @@ class BrowserWrapper:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
         """
         current_state = self.change_monitor()
-        self.log_info(f"Browser.click: Clicking {element_tuple}")
+        self._log_info(f"Browser.click: Clicking {element_tuple}")
         self.CORE.find_element(*self.format_element(element_tuple)).click()
         self.change_monitor(previous_data=current_state)
         return
@@ -421,7 +438,7 @@ class BrowserWrapper:
         Arguments:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
         """
-        self.log_info(f"Browser.mouseOver: Moving mouse over {element_tuple}")
+        self._log_info(f"Browser.mouseOver: Moving mouse over {element_tuple}")
         ActionChains(self.CORE).move_to_element(self.CORE.find_element(*self.format_element(element_tuple))).perform()
         return
 
@@ -431,7 +448,7 @@ class BrowserWrapper:
         Arguments:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
         """
-        self.log_info(f"Browser.scrollToElement: Scrolling to {element_tuple}")
+        self._log_info(f"Browser.scrollToElement: Scrolling to {element_tuple}")
         self.disable_logging()
         self.mouseOver(element_tuple)
         self.revert_logging()
@@ -444,7 +461,7 @@ class BrowserWrapper:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
             select_value {string} -- Value of the option to select
         """
-        self.log_info(f"Browser.selectOptionByValue: Setting {element_tuple} to {select_value}")
+        self._log_info(f"Browser.selectOptionByValue: Setting {element_tuple} to {select_value}")
         Select(self.CORE.find_element(*self.format_element(element_tuple))).select_by_value(select_value)
         return
 
@@ -455,7 +472,7 @@ class BrowserWrapper:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
             select_label {string} -- Label (visible text) of the option to select
         """
-        self.log_info(f"Browser.selectOptionByLabel: Setting {element_tuple} to {select_label}")
+        self._log_info(f"Browser.selectOptionByLabel: Setting {element_tuple} to {select_label}")
         Select(self.CORE.find_element(*self.format_element(element_tuple))).select_by_visible_text(select_label)
         return
 
@@ -465,7 +482,7 @@ class BrowserWrapper:
         Arguments:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
         """
-        self.log_info(f"Browser.selectRandomOption: Selecting random option for {element_tuple}")
+        self._log_info(f"Browser.selectRandomOption: Selecting random option for {element_tuple}")
         select = Select(self.CORE.find_element(*self.format_element(element_tuple)))
         select.select_by_index(randint(0, len(select.options) - 1))
         _ = self.getSelectedOption(element_tuple)  # To log what was chosen
@@ -479,7 +496,7 @@ class BrowserWrapper:
         """
         select = Select(self.CORE.find_element(*self.format_element(element_tuple)))
         result = select.first_selected_option
-        self.log_info(f"Browser.getSelectedOption: {element_tuple} is currently set to {result}")
+        self._log_info(f"Browser.getSelectedOption: {element_tuple} is currently set to {result}")
         return result
 
     def check(self, element_tuple, *, wrapper_element_tuple=None):
@@ -491,16 +508,16 @@ class BrowserWrapper:
             wrapper_element_tuple {PageObject Element} -- Default is None, tuple representation of element to be used for locating the wrapper, if needed. Wrappers are clicked in
                                                           place of the checkbox element when it is unreachable.
         """
-        self.log_info(f"Browser.check: Setting {element_tuple} checkbox to checked")
+        self._log_info(f"Browser.check: Setting {element_tuple} checkbox to checked")
         checkbox = self.CORE.find_element(*self.format_element(element_tuple))
         if not checkbox.is_selected():
             if wrapper_element_tuple is not None:
-                self.log_info(f"Browser.check: Wrapper element was provided, clicking {wrapper_element_tuple} instead")
+                self._log_info(f"Browser.check: Wrapper element was provided, clicking {wrapper_element_tuple} instead")
                 self.click(wrapper_element_tuple)
             else:
                 self.click(element_tuple)
         else:
-            self.log_info(f"Browser.check: Skipping action as {element_tuple} is already checked")
+            self._log_info(f"Browser.check: Skipping action as {element_tuple} is already checked")
         return
 
     def uncheck(self, element_tuple, *, wrapper_element_tuple=None):
@@ -512,16 +529,16 @@ class BrowserWrapper:
             wrapper_element_tuple {PageObject Element} -- Default is None, tuple representation of element to be used for locating the wrapper, if needed. Wrappers are clicked in
                                                           place of the checkbox element when it is unreachable.
         """
-        self.log_info(f"Browser.uncheck: Setting {element_tuple} checkbox to unchecked")
+        self._log_info(f"Browser.uncheck: Setting {element_tuple} checkbox to unchecked")
         checkbox = self.CORE.find_element(*self.format_element(element_tuple))
         if checkbox.is_selected():
             if wrapper_element_tuple is not None:
-                self.log_info(f"Browser.check: Wrapper element was provided, clicking {wrapper_element_tuple} instead")
+                self._log_info(f"Browser.check: Wrapper element was provided, clicking {wrapper_element_tuple} instead")
                 self.click(wrapper_element_tuple)
             else:
                 self.click(element_tuple)
         else:
-            self.log_info(f"Browser.check: Skipping action as {element_tuple} is already unchecked")
+            self._log_info(f"Browser.check: Skipping action as {element_tuple} is already unchecked")
         return
 
     def delay(self, length):
@@ -530,7 +547,7 @@ class BrowserWrapper:
         Arguments:
             length {int} -- Length of time to delay
         """
-        self.log_info(f"Browser.delay: Sleeping for {length} seconds")
+        self._log_info(f"Browser.delay: Sleeping for {length} seconds")
         return sleep(length)
 
     def getAttribute(self, element_tuple, attribute):
@@ -544,7 +561,7 @@ class BrowserWrapper:
             string -- Value of the provided attribute
         """
         result = self.CORE.find_element(*self.format_element(element_tuple)).get_attribute(attribute)
-        self.log_info(f"Browser.getAttribute: {attribute} attribute of {element_tuple} is {result}")
+        self._log_info(f"Browser.getAttribute: {attribute} attribute of {element_tuple} is {result}")
         return result
 
     def sendKeys(self, element_tuple, keys):
@@ -554,7 +571,7 @@ class BrowserWrapper:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
             keys {string} -- Keys to send to the element
         """
-        self.log_info(f"Browser.sendKeys: Sending {keys} to {element_tuple}")
+        self._log_info(f"Browser.sendKeys: Sending {keys} to {element_tuple}")
         self.CORE.find_element(*self.format_element(element_tuple)).send_keys(*keys)
         return
 
@@ -565,12 +582,12 @@ class BrowserWrapper:
             string -- Current URL
         """
         result = self.CORE.current_url
-        self.log_info(f"Browser.getUrl: Current URL is {result}")
+        self._log_info(f"Browser.getUrl: Current URL is {result}")
         return result
 
     def refresh(self):
         """Refresh the current window."""
-        self.log_info(f"Browser.refresh: Refreshing the page")
+        self._log_info(f"Browser.refresh: Refreshing the page")
         self.CORE.refresh()
         return
 
@@ -580,13 +597,13 @@ class BrowserWrapper:
         Arguments:
             element_tuple {PageObject Element} -- Tuple representation of element typically defined on PageObjects used for locating the element.
         """
-        self.log_info(f"Browser.switchToFrame: Switching to iframe {element_tuple}")
+        self._log_info(f"Browser.switchToFrame: Switching to iframe {element_tuple}")
         self.CORE.switch_to.frame(self.CORE.find_element(*self.format_element(element_tuple)))
         return
 
     def switchToDefaultContent(self):
         """Switches from iframe to default content in the DOM"""
-        self.log_info(f"Browser.switchToDefaultContent: Switching to default content")
+        self._log_info(f"Browser.switchToDefaultContent: Switching to default content")
         self.CORE.switch_to.default_content()
         return
 
@@ -596,7 +613,7 @@ class BrowserWrapper:
         Arguments:
             index {int} -- Zero-based index of window to switch to.
         """
-        self.log_info(f"Browser.switchToWindowByIndex: Switching to window at index {index}")
+        self._log_info(f"Browser.switchToWindowByIndex: Switching to window at index {index}")
         self.CORE.switch_to.window(self.CORE.window_handles[index])
         return
 
@@ -607,19 +624,19 @@ class BrowserWrapper:
 
     def acceptAlert(self):
         """Accepts an active alert on a page"""
-        self.log_info(f"Browser.acceptAlert: Accepting alert")
+        self._log_info(f"Browser.acceptAlert: Accepting alert")
         alert = self.CORE.switch_to.alert
         alert.accept()
         return
 
     def back(self):
         """Uses the browser back functionality to go to the previous page."""
-        self.log_info(f"Browser.back: Telling browser to return to previous page")
+        self._log_info(f"Browser.back: Telling browser to return to previous page")
         self.CORE.back()
         return
 
 
-def create_chrome_instance():
+def create_chrome_instance(provided_config=None):
     """Generates a ChromeDriver instance in compliance with configured settings
 
     Returns:
@@ -629,7 +646,10 @@ def create_chrome_instance():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")  # Prevents use of dev/shm, preventing memory shortages in containers
     chrome_options.add_argument(f"--window-size={BrowserWrapper.BrowserWidth},{BrowserWrapper.BrowserHeight}")
-    if BrowserWrapper.Headless:
+    for option in provided_config.Options:
+        chrome_options.add_argument(option)
+        
+    if provided_config.Headless:
         chrome_options.add_argument("--headless")
 
     # Enable Browser Console Log Collection
@@ -638,29 +658,37 @@ def create_chrome_instance():
     capabilities.update(Browser.DesiredCapabilities)
     desired_capabilities['goog:loggingPrefs'] = {'browser': 'ALL'}
 
-    if BrowserWrapper.LocationType is "Local":
+    if provided_config.Remote is False:
+        from webdriver_manager.chrome import ChromeDriverManager
         return webdriver.Chrome(executable_path=ChromeDriverManager().install(), options=chrome_options, desired_capabilities=desired_capabilities)
     else:
-        return webdriver.Remote(command_executor=f"{BrowserWrapper.SeleniumGridHost}:{BrowserWrapper.SeleniumGridPort}/wd/hub", desired_capabilities=capabilities)
+        return webdriver.Remote(command_executor=f"{provided_config.SeleniumGridHost}:{provided_config.SeleniumGridPort}/wd/hub", desired_capabilities=capabilities)
 
 
-def create_firefox_instance():
+def create_firefox_instance(provided_config=None):
     """Generates a GeckoDriver instance in compliance with configured settings
 
     Returns:
         [GeckoDriver Instance] -- Configured Local or Remote GeckoDriver
     """
-    firefox_options = FireFoxOptions()
-    firefox_options.add_argument(f"--width={BrowserWrapper.BrowserWidth}")
-    firefox_options.add_argument(f"--height={BrowserWrapper.BrowserHeight}")
-    if BrowserWrapper.Headless:
+    firefox_options = FirefoxOptions()
+    firefox_options.add_argument(f"--width={provided_config.BrowserWidth}")
+    firefox_options.add_argument(f"--height={provided_config.BrowserHeight}")
+    for option in provided_config.Options:
+        firefox_options.add_argument(option)
+        
+    if provided_config.Headless:
         firefox_options.headless = True
         
     
     capabilities = firefox_options.to_capabilities()
-    capabilities.update(BrowserWrapper.DesiredCapabilities)
+    capabilities.update(provided_config.DesiredCapabilities)
 
-    if BrowserWrapper.LocationType is "Local":
+    if provided_config.Remote is False:
+        from webdriver_manager.firefox import GeckoDriverManager
         return webdriver.Firefox(executable_path=f'{GeckoDriverManager().install()}', desired_capabilities=firefox_options)
     else:
-        return webdriver.Remote(command_executor=f"{BrowserWrapper.SeleniumGridHost}:{BrowserWrapper.SeleniumGridPort}/wd/hub", desired_capabilities=capabilities)
+        return webdriver.Remote(command_executor=f"{provided_config.SeleniumGridHost}:{provided_config.SeleniumGridPort}/wd/hub", desired_capabilities=capabilities)
+    
+if __name__ == '__main__':
+    config = BrowserWrapperConfiguration(ho)
