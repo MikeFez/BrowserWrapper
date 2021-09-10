@@ -7,7 +7,7 @@ The `BrowserWrapper` class wraps the core functionality of the selenium webdrive
 from BrowserWrapper import BrowserWrapper
 
 # DriverWrapper 'wrapped' functions:
-Browser.navigate("https://logmein.com")
+Browser.navigate("https://google.com")
 Browser.elementIsVisible(element)
 Browser.waitForElementPresent(element, timeout=3)  # timeout is optional as the default is 5
 Browser.click(element)
