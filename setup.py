@@ -13,6 +13,7 @@ def read(fname):
 def get_requirements():
     return (read("requirements.txt").splitlines())
 
+print(f"!!! Requirements {get_requirements()}")
 setup(
     name="BrowserWrapper", # Replace with your own username
     version=_globals["__version__"],
