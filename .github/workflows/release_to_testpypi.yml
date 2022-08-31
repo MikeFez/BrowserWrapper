@@ -35,7 +35,7 @@ jobs:
           VERSION="${{ steps.previoustag.outputs.tag }}.dev${{ steps.vars.outputs.sha_short }}"
           echo "Version will be $VERSION"
           PLACEHOLDER='__version__ = "develop"'
-          VERSION_FILE='BrowserWrapper/__init__.py'
+          VERSION_FILE='BrowserWrapper/version.py'
           # ensure the placeholder is there. If grep doesn't find the placeholder
           # it exits with exit code 1 and github actions aborts the build.
           grep "$PLACEHOLDER" "$VERSION_FILE"

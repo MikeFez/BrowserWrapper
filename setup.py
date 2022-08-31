@@ -1,7 +1,10 @@
 from setuptools import setup, find_packages
 import os
-from BrowserWrapper import __version__
 
+_globals = {}
+version_file = "BrowserWrapper/version.py"
+with open(version_file, "r") as f:
+    exec(f.read().strip(), _globals)
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -13,12 +16,10 @@ def get_requirements():
         .read()
         .splitlines()
     )
-print("!!!!!!!!")
-print(get_requirements())
 
 setup(
     name="BrowserWrapper", # Replace with your own username
-    version=__version__,
+    version=_globals["__version__"],
     author="Michael Fessenden",
     author_email="MikeFez@gmail.com",
     description="A selenium driver wrapper simplifying interactions with page elements",
