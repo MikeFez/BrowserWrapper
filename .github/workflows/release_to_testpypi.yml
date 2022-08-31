@@ -28,6 +28,7 @@ jobs:
         run: |
           # from refs/tags/v1.2.3 get 1.2.3
           VERSION="develop@${{ steps.vars.outputs.sha_short }}"
+          echo "Version will be $VERSION"
           PLACEHOLDER='__version__ = "develop"'
           VERSION_FILE='BrowserWrapper/__init__.py'
           # ensure the placeholder is there. If grep doesn't find the placeholder

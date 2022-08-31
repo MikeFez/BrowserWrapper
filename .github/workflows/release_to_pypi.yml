@@ -23,6 +23,7 @@ jobs:
         run: |
           # from refs/tags/v1.2.3 get 1.2.3
           VERSION=$(echo $GITHUB_REF | sed 's#.*/v##')
+          echo "Version will be $VERSION"
           PER_LENGTH=$(tr -dc ',' <<< "$VERSION" | awk '{ print length; }')
           if [ "$PER_LENGTH" = "3" ]; then
             echo "$VERSION does not contain major/minor/patch/!"
