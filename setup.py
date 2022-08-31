@@ -9,6 +9,15 @@ with open(version_file, "r") as f:
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+def get_requirements():
+    print(f"Checking {os.path.join(os.path.dirname(__file__), 'requirements.txt')}")
+    return (
+        open(os.path.join(os.path.dirname(__file__), "requirements.txt"))
+        .read()
+        .splitlines()
+    )
+
 setup(
     name="BrowserWrapper", # Replace with your own username
     version=_globals["__version__"],
@@ -19,7 +28,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/MikeFez/BrowserWrapper",
     packages=find_packages(exclude=["test"]),
-    install_requires=parse_requirements('requirements.txt'),
+    install_requires=get_requirements(),
     test_suite="test",
     classifiers=[
         "Programming Language :: Python :: 3",
