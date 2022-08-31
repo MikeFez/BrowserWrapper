@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, parse_requirements
 import os
 
 _globals = {}
@@ -8,14 +8,6 @@ with open(version_file, "r") as f:
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
-
-
-def get_requirements():
-    return (
-        open(os.path.join(os.path.dirname(__file__), "requirements.txt"))
-        .read()
-        .splitlines()
-    )
 
 setup(
     name="BrowserWrapper", # Replace with your own username
@@ -27,7 +19,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/MikeFez/BrowserWrapper",
     packages=find_packages(exclude=["test"]),
-    install_requires=get_requirements(),
+    install_requires=parse_requirements('requirements.txt'),
     test_suite="test",
     classifiers=[
         "Programming Language :: Python :: 3",
