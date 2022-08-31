@@ -20,12 +20,12 @@ seleniumLogger.setLevel(logging.WARNING)
 urllibLogger.setLevel(logging.WARNING)
 
 @dataclass
-class DriverWrapperConfiguration:
+class BrowserWrapperConfiguration:
     """Model for scan configuration"""
 
     def __init__(self, BrowserType="Chrome", Remote=False, Headless=False, BrowserWidth=1920,
                  BrowserHeight=1080, SeleniumGridHost="", SeleniumGridPort=4444, Options=[], DesiredCapabilities={}):
-        """DriverWrapperConfiguration instances are used to standardize driver configuration when provided while creating a DriverWrapper instance.
+        """BrowserWrapperConfiguration instances are used to standardize driver configuration when provided while creating a BrowserWrapper instance.
 
         Keyword Arguments:
             BrowserType {str} -- "Chrome" or "Firefox" (default: {"Chrome"})
@@ -48,10 +48,10 @@ class DriverWrapperConfiguration:
         self.Options = Options
         self.DesiredCapabilities = DesiredCapabilities
 
-class DriverWrapper:
+class BrowserWrapper:
     """Wrapper for driver functionality"""
 
-    def __init__(self, Config=DriverWrapperConfiguration(), Driver=None, Log=None):
+    def __init__(self, Config=BrowserWrapperConfiguration(), Driver=None, Log=None):
         if Config is None and Driver is None:
             raise EnvironmentError("Neither config nor existing driver was provided, one of which is required")
         self._provided_config = Config
@@ -693,8 +693,8 @@ def create_firefox_instance(provided_config=None):
         return webdriver.Remote(command_executor=f"{provided_config.SeleniumGridHost}:{provided_config.SeleniumGridPort}/wd/hub", desired_capabilities=capabilities)
 
 if __name__ == '__main__':
-    config = DriverWrapperConfiguration(Options=["--no-sandbox", "--disable-dev-shm-usage"])
-    driver = DriverWrapper(Config=config)
+    config = BrowserWrapperConfiguration(Options=["--no-sandbox", "--disable-dev-shm-usage"])
+    driver = BrowserWrapper(Config=config)
     driver.navigate("https://www.google.com")
     sleep(1)
     driver.quit(only_if_alive=True)
