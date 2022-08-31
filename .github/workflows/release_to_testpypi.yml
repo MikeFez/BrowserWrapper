@@ -32,7 +32,7 @@ jobs:
         shell: bash
         run: |
           # from refs/tags/v1.2.3 get 1.2.3
-          VERSION="${{ steps.previoustag.outputs.tag }}.dev${{ steps.vars.outputs.sha_short }}"
+          VERSION="${{ steps.previoustag.outputs.tag }}.dev"
           echo "Version will be $VERSION"
           PLACEHOLDER='__version__ = "develop"'
           VERSION_FILE='BrowserWrapper/version.py'
