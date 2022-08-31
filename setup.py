@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages, parse_requirements
+from setuptools import setup, find_packages
 import os
 
 _globals = {}
