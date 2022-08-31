@@ -11,12 +11,7 @@ def read(fname):
 
 
 def get_requirements():
-    print(f"Checking {os.path.join(os.path.dirname(__file__), 'requirements.txt')}")
-    return (
-        open(os.path.join(os.path.dirname(__file__), "requirements.txt"))
-        .read()
-        .splitlines()
-    )
+    return (read("requirements.txt").splitlines())
 
 setup(
     name="BrowserWrapper", # Replace with your own username
