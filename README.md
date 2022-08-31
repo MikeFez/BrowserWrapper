@@ -1,5 +1,10 @@
 # BrowserWrapper
 
+## Install
+```bash
+$ pip install BrowserWrapper
+```
+
 ## The Browser Object (aka BrowserWrapper)
 The `BrowserWrapper` class wraps the core functionality of the selenium webdriver, allowing us to add functionality which simplifies interactions with the Selenium WebDriver object. Core selenium functionality is still accessible via Browser.CORE.{Webdriver_Function_Here}. Examples below:
 
