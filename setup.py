@@ -21,6 +21,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/MikeFez/BrowserWrapper",
     packages=find_packages(exclude=["test"]),
+    package_data={"": ["*.txt"]},
     install_requires=requirements,
     test_suite="test",
     classifiers=[
