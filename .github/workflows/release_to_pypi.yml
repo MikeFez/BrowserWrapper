@@ -19,7 +19,7 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Autobump version
+      - name: Inject package version from tag
         shell: bash
         run: |
           # from refs/tags/v1.2.3 get 1.2.3
@@ -42,11 +42,6 @@ jobs:
           python -m pip install --upgrade build twine
           python3 setup.py sdist
           twine check --strict dist/*
-
-      - name: Autobump version
-        shell: bash
-        run: |
-          mv dist/BrowserWrapper-1.0.0.tar.gz dist/BrowserWrapper-1.0.0-FINAL.tar.gz
 
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
