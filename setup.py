@@ -1,18 +1,20 @@
-import setuptools
+from setuptools import setup, find_packages
+import os
+from BrowserWrapper import __version__
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-setuptools.setup(
+setup(
     name="BrowserWrapper", # Replace with your own username
-    version="0.0.1",
+    version=__version__,
     author="Michael Fessenden",
     author_email="MikeFez@gmail.com",
     description="A selenium driver wrapper simplifying interactions with page elements",
-    long_description=long_description,
+    long_description=read('README.md'),
     long_description_content_type="text/markdown",
     url="https://github.com/MikeFez/BrowserWrapper",
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.7",
         "License :: OSI Approved :: MIT License",
