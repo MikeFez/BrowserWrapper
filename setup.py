@@ -11,8 +11,6 @@ def read(fname):
 
 requirements = read("requirements.txt").splitlines()
 
-print(f"!!! Requirements {requirements}")
-print(f"!!! Packages {find_packages(exclude=['test'])}")
 setup(
     name="BrowserWrapper", # Replace with your own username
     version=_globals["__version__"],
