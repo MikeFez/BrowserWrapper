@@ -11,7 +11,11 @@ def read(fname):
 
 
 def get_requirements():
-    return (read("requirements.txt").splitlines())
+    return (
+        open(os.path.join(os.path.dirname(__file__), "requirements.txt"))
+        .read()
+        .splitlines()
+    )
 
 print(f"!!! Requirements {get_requirements()}")
 setup(
