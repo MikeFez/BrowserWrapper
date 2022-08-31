@@ -43,6 +43,11 @@ jobs:
           python3 setup.py sdist
           twine check --strict dist/*
 
+      - name: Autobump version
+        shell: bash
+        run: |
+          mv dist/BrowserWrapper-1.0.0.tar.gz dist/BrowserWrapper-1.0.0-FINAL.tar.gz
+
       - name: Publish distribution to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
