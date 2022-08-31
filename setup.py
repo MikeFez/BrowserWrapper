@@ -9,8 +9,6 @@ with open(version_file, "r") as f:
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-requirements = read("requirements.txt").splitlines()
-
 setup(
     name="BrowserWrapper", # Replace with your own username
     version=_globals["__version__"],
@@ -20,9 +18,13 @@ setup(
     long_description=read('README.md'),
     long_description_content_type="text/markdown",
     url="https://github.com/MikeFez/BrowserWrapper",
-    packages=find_packages(exclude=["test"]),
-    package_data={"": ["*.txt"]},
-    install_requires=requirements,
+    packages=[
+        "BrowserWrapper"
+    ],
+    install_requires=[
+        "selenium==3.141.0",
+        "webdriver-manager==2.3.0"
+    ],
     test_suite="test",
     classifiers=[
         "Programming Language :: Python :: 3",
