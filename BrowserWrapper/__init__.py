@@ -20,13 +20,13 @@ seleniumLogger.setLevel(logging.WARNING)
 urllibLogger.setLevel(logging.WARNING)
 
 @dataclass
-class BrowserWrapperConfiguration:
+class DriverWrapperConfiguration:
     """Model for scan configuration"""
-    
+
     def __init__(self, BrowserType="Chrome", Remote=False, Headless=False, BrowserWidth=1920,
                  BrowserHeight=1080, SeleniumGridHost="", SeleniumGridPort=4444, Options=[], DesiredCapabilities={}):
-        """BrowserWrapperConfiguration instances are used to standardize driver configuration when provided while creating a BrowserWrapper instance.
-        
+        """DriverWrapperConfiguration instances are used to standardize driver configuration when provided while creating a DriverWrapper instance.
+
         Keyword Arguments:
             BrowserType {str} -- "Chrome" or "Firefox" (default: {"Chrome"})
             Remote {bool} -- Generates a remote grid browser when enabled, versus a local browser when false (default: {False})
@@ -47,11 +47,11 @@ class BrowserWrapperConfiguration:
         self.SeleniumGridPort = SeleniumGridPort
         self.Options = Options
         self.DesiredCapabilities = DesiredCapabilities
-        
-class BrowserWrapper:
+
+class DriverWrapper:
     """Wrapper for driver functionality"""
 
-    def __init__(self, Config=BrowserWrapperConfiguration(), Driver=None, Log=None):
+    def __init__(self, Config=DriverWrapperConfiguration(), Driver=None, Log=None):
         if Config is None and Driver is None:
             raise EnvironmentError("Neither config nor existing driver was provided, one of which is required")
         self._provided_config = Config
@@ -651,7 +651,7 @@ def create_chrome_instance(provided_config=None):
     chrome_options.add_argument(f"--window-size={provided_config.BrowserWidth},{provided_config.BrowserHeight}")
     for option in provided_config.Options:
         chrome_options.add_argument(option)
-        
+
     if provided_config.Headless:
         chrome_options.add_argument("--headless")
 
@@ -679,10 +679,10 @@ def create_firefox_instance(provided_config=None):
     firefox_options.add_argument(f"--height={provided_config.BrowserHeight}")
     for option in provided_config.Options:
         firefox_options.add_argument(option)
-        
+
     if provided_config.Headless:
         firefox_options.headless = True
-        
+
     capabilities = firefox_options.to_capabilities()
     capabilities.update(provided_config.DesiredCapabilities)
 
@@ -691,11 +691,10 @@ def create_firefox_instance(provided_config=None):
         return webdriver.Firefox(executable_path=f'{GeckoDriverManager().install()}', desired_capabilities=firefox_options)
     else:
         return webdriver.Remote(command_executor=f"{provided_config.SeleniumGridHost}:{provided_config.SeleniumGridPort}/wd/hub", desired_capabilities=capabilities)
-    
+
 if __name__ == '__main__':
-    config = BrowserWrapperConfiguration(Options=["--no-sandbox", "--disable-dev-shm-usage"])
-    driver = BrowserWrapper(Config=config)
+    config = DriverWrapperConfiguration(Options=["--no-sandbox", "--disable-dev-shm-usage"])
+    driver = DriverWrapper(Config=config)
     driver.navigate("https://www.google.com")
     sleep(1)
     driver.quit(only_if_alive=True)
-            

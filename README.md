@@ -1,10 +1,12 @@
-# BrowserWrapper
+# DriverWrapper
 
 ## The Browser Object (aka DriverWrapper)
-The `BrowserWrapper` class wraps the core functionality of the selenium webdriver, allowing us to add functionality which simplifies interactions with the Selenium WebDriver object. Core selenium functionality is still accessible via Browser.CORE.{Webdriver_Function_Here}. Examples below:
+The `DriverWrapper` class wraps the core functionality of the selenium webdriver, allowing us to add functionality which simplifies interactions with the Selenium WebDriver object. Core selenium functionality is still accessible via Browser.CORE.{Webdriver_Function_Here}. Examples below:
 
 ```python
-from BrowserWrapper import BrowserWrapper
+from DriverWrapper import DriverWrapper
+
+Browser = DriverWrapper()
 
 # DriverWrapper 'wrapped' functions:
 Browser.navigate("https://google.com")
@@ -17,8 +19,8 @@ Browser.quit()
 Browser.CORE.delete_all_cookies()
 ```
 
-## Element declarations for use within the BrowserWrapper
-Interacting with elements requires them to be declared in a standardized format, which is tuples with the first item being the locater method, and the second being the locator string. This requires the import `from selenium.webdriver.common.by import By`.
+## Element declarations for use within the DriverWrapper
+Interacting with elements requires them to be declared in a standardized format, tuples with the first element being the locater method and the second being the locator string. This requires the import `from selenium.webdriver.common.by import By`.
 
 ```python
 from selenium.webdriver.common.by import By
@@ -30,10 +32,10 @@ country_select = (By.CSS_SELECTOR, 'select[name="Country"]')
 submit_button = (By.CSS_SELECTOR, '#submit')
 ```
 
-The methods within the BrowserWrapper class format this tuple for use with core selenium functionality.
+The methods within the DriverWrapper class format this tuple for use with core selenium functionality.
 
-## BrowserWrapper Method Parameters
-BrowserWrapper methods tend to be self explanatory, such as when using .navigate(), a URL is expected to be provided. However, many methods have optional parameters. These parameters are not provided via positional arguments, and therefore must be provided via keyword and value. This is actually enforced - you'll receive an exception if you attempt to override a parameter with a default value via the positional arguments instead of keyword arguments. This is done to enhance readability.
+## DriverWrapper Method Parameters
+DriverWrapper methods tend to be self explanatory, such as when using .navigate(), a URL is expected to be provided. However, many methods have optional parameters. These parameters are not provided via positional arguments, and therefore must be provided via keyword and value. This is enforced - you'll receive an exception if you attempt to override a parameter with a default value via the positional arguments instead of keyword arguments. This is done to enhance readability.
 
 Note the use of the `timeout=10` parameter in `waitForElementPresent()` - any optional parameters (parameters which default to a value if not called) are **required** to be called via keyword if you plan on overriding the default value. That being said, if you're fine with the default value, you can skip specifying the keyword completely.
 

@@ -11,7 +11,7 @@ setuptools.setup(
     description="A selenium driver wrapper simplifying interactions with page elements",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/MikeFez/BrowserWrapper",
+    url="https://github.com/MikeFez/DriverWrapper",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3.7",
