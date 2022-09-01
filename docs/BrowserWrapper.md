@@ -1,4 +1,3 @@
-# Reference
+# BrowserWrapper Reference
 
-::: BrowserWrapper.BrowserWrapperConfiguration
 ::: BrowserWrapper.BrowserWrapper

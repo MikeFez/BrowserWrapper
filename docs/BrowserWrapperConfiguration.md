@@ -1,0 +1,3 @@
+# BrowserWrapperConfiguration Reference
+
+::: BrowserWrapper.BrowserWrapperConfiguration

@@ -1,14 +1,16 @@
 # BrowserWrapper
 
-## Installation
-```bash
-$ pip install BrowserWrapper
-```
-
 ## What is BrowserWrapper?
 BrowserWrapper is a python3 package designed to simplify the management and usage of selenium webdrivers, and the elements it may interact with. BrowserWrapper takes care of maintaining webdrivers by wrapping [webdriver-manager](https://github.com/SergeyPirogov/webdriver_manager), and furthermore wraps many common selenium commands in order to simplify web-based activities.
 
 It's as simple as `Browser = BrowserWrapper()`!
+
+BrowserWrapper documentation can be found [here](https://mikefez.github.io/BrowserWrapper/).
+
+## Installation
+```bash
+$ pip install BrowserWrapper
+```
 
 ## The Browser Object (aka BrowserWrapper)
 The `BrowserWrapper` class wraps the core functionality of the selenium webdriver, allowing us to add functionality which simplifies interactions with the Selenium WebDriver object. Core selenium functionality is still accessible via Browser.CORE.{Webdriver_Function_Here}. Examples below:
