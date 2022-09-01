@@ -6,6 +6,7 @@ repo_name: 'MikeFez/BrowserWrapper'
 repo_url: 'https://github.com/MikeFez/BrowserWrapper'
 nav:
     - Home: index.md
+    - BrowserWrapper: BrowserWrapper.md
 theme:
   name: 'material'
 
