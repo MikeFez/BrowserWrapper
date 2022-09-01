@@ -1,1 +1,1 @@
-from .browserwrapper import BrowserWrapper
+from .browserwrapper import BrowserWrapper, BrowserWrapperConfiguration
