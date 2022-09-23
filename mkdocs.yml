@@ -11,6 +11,11 @@ nav:
 theme:
   name: 'material'
 
+markdown_extensions:
+  - pymdownx.magiclink
+  - pymdownx.snippets:
+      check_paths: true
+
 plugins:
   - mkdocstrings
   - search
