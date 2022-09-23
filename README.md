@@ -33,17 +33,38 @@ Browser.quit()
 Browser.CORE.delete_all_cookies()
 ```
 
+More advanced browser configuration can be managed through a BrowserWrapperConfiguration() object.
+```python
+from BrowserWrapper import BrowserWrapper, BrowserWrapperConfiguration
+
+browser_config = BrowserWrapperConfiguration(
+    BrowserType="Chrome", # Or Firefox
+    Remote=False,
+    SeleniumGridHost="192.168.1.150",
+    SeleniumGridPort=4444,
+    Headless=True,
+    BrowserWidth=1920,
+    BrowserHeight=1080,
+    Options=[],  # https://chromedriver.chromium.org/capabilities#h.p_ID_106
+    DesiredCapabilities={} # https://chromedriver.chromium.org/capabilities#h.p_ID_52
+)
+Browser = BrowserWrapper(config=browser_config)
+```
+
 ## Element declarations for use within the BrowserWrapper
-Interacting with elements requires them to be declared in a standardized format, tuples with the first element being the locater method and the second being the locator string. This requires the import `from selenium.webdriver.common.by import By`.
+Interacting with elements requires them to be declared in a standardized format, tuples with the first element being the locater method and the second being the locator string. This requires the import `from selenium.webdriver.common.by import By`. [Link to selenium's reference](https://www.selenium.dev/selenium/docs/api/py/webdriver/selenium.webdriver.common.by.html).
 
 ```python
 from selenium.webdriver.common.by import By
 
-first_name_input = (By.CSS_SELECTOR, '#firstName')
-last_name_input = (By.CSS_SELECTOR, '#lastName')
-email_input = (By.CSS_SELECTOR, 'input[name="Email"')
-country_select = (By.CSS_SELECTOR, 'select[name="Country"]')
-submit_button = (By.CSS_SELECTOR, '#submit')
+class_name_example = (By.CLASS_NAME, 'content')
+css_selector_example = (By.CSS_SELECTOR, '#lastName')
+xpath_example = (By.XPATH, '//tagname[@attribute="value"]')
+id_example = (By.ID, 'session_key')
+link_text_example = (By.LINK_TEXT, 'https://www.google.com')
+partial_link_text_example = (By.PARTIAL_LINK_TEXT, 'google.com')
+name_example = (By.NAME, 'password')
+tag_name_example = (By.TAG_NAME, 'input')
 ```
 
 The methods within the BrowserWrapper class format this tuple for use with core selenium functionality.
@@ -65,4 +86,24 @@ Browser.waitForElementPresent(self, submit_button, 10)
 
 # Providing timeout=10 vs just 10 provides clarity in code as to what 10's purpose is
 Browser.waitForElementPresent(self, submit_button, timeout=10)
+```
+
+## Accessing typical webdriver functionality
+While BrowserWrapper simplifies common interactions, all core selenium functionality can be accessed via the `Browser.CORE` attribute.
+
+```python
+from BrowserWrapper import BrowserWrapper
+from selenium.webdriver.common.by import By
+
+Browser = BrowserWrapper()
+
+Browser.CORE.delete_all_cookies()
+Browser.CORE.get("http://www.python.org")
+assert "Python" in Browser.CORE.title
+elem = Browser.CORE.find_element(By.NAME, "q")
+elem.clear()
+Browser.CORE.send_keys("pycon")
+Browser.CORE.send_keys(Keys.RETURN)
+assert "No results found." not in Browser.CORE.page_source
+Browser.CORE.close()
 ```

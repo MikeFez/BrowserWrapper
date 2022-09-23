@@ -5,6 +5,7 @@ docs_dir: docs/
 repo_name: 'MikeFez/BrowserWrapper'
 repo_url: 'https://github.com/MikeFez/BrowserWrapper'
 nav:
+    - Home: Index.md
     - BrowserWrapper Functionality: BrowserWrapper.md
     - BrowserWrapperConfiguration: BrowserWrapperConfiguration.md
 theme:
