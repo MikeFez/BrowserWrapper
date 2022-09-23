@@ -5,7 +5,7 @@ BrowserWrapper is a python3 package designed to simplify the management and usag
 
 It's as simple as `Browser = BrowserWrapper()`!
 
-BrowserWrapper documentation can be found [here](https://mikefez.github.io/BrowserWrapper).
+BrowserWrapper documentation can be found [here](https://mikefez.github.io/BrowserWrapper/).
 
 ## Installation
 ```bash
