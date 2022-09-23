@@ -1,20 +1,15 @@
 site_name: BrowserWrapper Documentation
 site_description: 'Documentation for BrowserWrapper'
 site_author: 'Michael Fessenden'
-docs_dir: docs/
+docs_dir: .
 repo_name: 'MikeFez/BrowserWrapper'
 repo_url: 'https://github.com/MikeFez/BrowserWrapper'
 nav:
-    - Home: Index.md
-    - BrowserWrapper Functionality: BrowserWrapper.md
-    - BrowserWrapperConfiguration: BrowserWrapperConfiguration.md
+    - Home: README.md
+    - BrowserWrapper Functionality: docs/BrowserWrapper.md
+    - BrowserWrapperConfiguration: docs/BrowserWrapperConfiguration.md
 theme:
   name: 'material'
-
-markdown_extensions:
-  - pymdownx.magiclink
-  - pymdownx.snippets:
-      check_paths: true
 
 plugins:
   - mkdocstrings

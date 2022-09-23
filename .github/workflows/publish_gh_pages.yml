@@ -11,5 +11,5 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.x
-      - run: pip install mkdocs mkdocstrings[python] mkdocs-material pydoc-markdown markdown pymdown-extensions
+      - run: pip install mkdocs mkdocstrings[python] mkdocs-material
       - run: mkdocs gh-deploy --force --clean --verbose
