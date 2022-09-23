@@ -1,13 +1,13 @@
 site_name: BrowserWrapper Documentation
 site_description: 'Documentation for BrowserWrapper'
 site_author: 'Michael Fessenden'
-docs_dir: .
+docs_dir: docs/
 repo_name: 'MikeFez/BrowserWrapper'
 repo_url: 'https://github.com/MikeFez/BrowserWrapper'
 nav:
     - Home: README.md
-    - BrowserWrapper Functionality: docs/BrowserWrapper.md
-    - BrowserWrapperConfiguration: docs/BrowserWrapperConfiguration.md
+    - BrowserWrapper Functionality: BrowserWrapper.md
+    - BrowserWrapperConfiguration: BrowserWrapperConfiguration.md
 theme:
   name: 'material'
 
