@@ -1,7 +1,7 @@
 # BrowserWrapper
 
 ## What is BrowserWrapper?
-BrowserWrapper is a python3 package designed to simplify the management and usage of selenium webdrivers, and the elements it may interact with. BrowserWrapper takes care of maintaining webdrivers by wrapping [webdriver-manager](https://github.com/SergeyPirogov/webdriver_manager), and furthermore wraps many common selenium commands in order to simplify web-based activities.
+BrowserWrapper is a python3 package designed to simplify the management and usage of selenium webdrivers, and the elements it may interact with. BrowserWrapper takes care of installing & maintaining webdrivers by wrapping [webdriver-manager](https://github.com/SergeyPirogov/webdriver_manager), and furthermore wraps many common selenium commands in order to simplify web-based activities.
 
 It's as simple as `Browser = BrowserWrapper()`!
 
@@ -20,10 +20,12 @@ from BrowserWrapper import BrowserWrapper
 
 Browser = BrowserWrapper()
 
+element = (By.CSS_SELECTOR, '#firstName')
+
 # BrowserWrapper 'wrapped' functions:
 Browser.navigate("https://google.com")
-Browser.elementIsVisible(element)
-Browser.waitForElementPresent(element, timeout=3)  # timeout is optional as the default is 5
+if not Browser.elementIsVisible(element):
+    Browser.waitForElementPresent(element, timeout=3)  # timeout is optional as the default is 5
 Browser.click(element)
 Browser.quit()
 
