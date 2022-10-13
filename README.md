@@ -3,6 +3,8 @@
 ## What is BrowserWrapper?
 BrowserWrapper is a python3 package designed to simplify the management and usage of selenium webdrivers, and the elements it may interact with. BrowserWrapper takes care of installing & maintaining webdrivers by wrapping [webdriver-manager](https://github.com/SergeyPirogov/webdriver_manager), and furthermore wraps many common selenium commands in order to simplify web-based activities.
 
+**BrowserWrapper currently supports both Chrome & Firefox**
+
 It's as simple as `Browser = BrowserWrapper()`!
 
 BrowserWrapper documentation can be found [here](https://mikefez.github.io/BrowserWrapper/).
