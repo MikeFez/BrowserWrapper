@@ -345,6 +345,21 @@ class BrowserWrapper:
             # We're going to capture the timeout as it doesn't matter - the return statement is the bool
         return url_portion in self.CORE.current_url
 
+    def waitForURLToEqual(self, url, *, timeout=5):
+        """Wait a configurable period of time for the current URL to equal a given string.
+
+        Arguments:
+            url {string} -- The string you want to check that the URL equals
+            timeout {int} -- Max length of time to wait for the condition
+        """
+        try:
+            WebDriverWait(self.CORE, timeout).until(lambda self: url == self.current_url)
+            self.log_info(f"Browser.waitForURLToEqual: {self.CORE.current_url} equals {url} within {timeout} seconds")
+        except SeleniumExceptions.TimeoutException:
+            self.log_warning(f"Browser.waitForURLToEqual: {self.CORE.current_url} does not equal {url} after {timeout} seconds")
+            # We're going to capture the timeout as it doesn't matter - the return statement is the bool
+        return url in self.CORE.current_url
+
     def waitForElementTextChange(self, element_tuple, original_text, *, timeout=5):
         """Wait a configurable period of time for an element's text to change
         Arguments:
